@@ -1,6 +1,6 @@
 import {mount} from '../assets/viewer.js?v=3';
 import {ConversationMicrophone,prepareMicrophone} from './microphone.js?v=5';
-import {apiFetch,setAccess} from './api.js?v=5';
+import {apiFetch} from './api.js?v=6';
 import {BrowserTranscriber} from './transcriber.js?v=5';
 
 const $=s=>document.querySelector(s),messages=$('#messages'),input=$('#message');
@@ -175,13 +175,11 @@ async function connectService(){
  try{
   const response=await apiFetch('/api/status',{signal:AbortSignal.timeout(20000)});if(!response.ok)throw Error('A conversa está acordando. Tente conectar novamente em instantes.');
   const status=await response.json();state.voiceReady=status.voice_ready;
-  $('#access-form').hidden=!(status.requires_access&&!status.authorized);
-  state.ready=status.ready&&(!status.requires_access||status.authorized);controls();activity();
+  state.ready=status.ready;controls();activity();
   if(!status.ready)throw Error('A conversa está se preparando. Tente conectar novamente em instantes.');
   $('#reconnect').hidden=true;error();
  }catch(exc){activity();error(exc.message);$('#reconnect').hidden=false;}
 }
-$('#access-form').addEventListener('submit',event=>{event.preventDefault();setAccess($('#access-code').value);connectService();});
 $('#reconnect').addEventListener('click',connectService);
 try{
  view=await mount($('#avatar'),new URL('../assets',import.meta.url).href);$('#loading').hidden=true;controls();

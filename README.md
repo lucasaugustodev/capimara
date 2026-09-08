@@ -25,10 +25,9 @@ jsDelivr. O modelo é preparado antes de abrir a escuta. Áudio do microfone
 fica no aparelho; somente o texto reconhecido segue para o servidor.
 
 O serviço de APIs é `https://augustolucasg-capimara-api.hf.space`.
-As chaves dos provedores ficam nos Secrets desse serviço. O acesso à conversa
-usa um link de convite com um código em seu fragmento; esse código não faz
-parte do repositório e é guardado apenas na sessão da aba ao abrir o link.
-Sem convite, o avatar pode ser visto e a página oferece a entrada por código.
+As chaves dos provedores ficam nos Secrets desse serviço. Qualquer dispositivo
+pode abrir o link normal e conversar, sem convite, conta ou código de acesso.
+O servidor mantém os limites de uso da demonstração.
 
 Para iniciar a conversa, clique em **Conversar por voz** uma vez e permita
 o acesso ao microfone. Depois disso, a fala é enviada automaticamente ao
