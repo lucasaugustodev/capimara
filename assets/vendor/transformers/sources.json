@@ -1,0 +1,39 @@
+[
+  {
+    "file": "LICENSE.txt",
+    "source": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/LICENSE",
+    "bytes": 11358,
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "file": "ort-wasm-simd-threaded.jsep.mjs",
+    "source": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0-dev.20260416-b7804b056c/dist/ort-wasm-simd-threaded.jsep.mjs",
+    "bytes": 46490,
+    "sha256": "522b3769929f5684c83a12cf1e06eedf073b65d161728b4f3757c75d62b14384"
+  },
+  {
+    "file": "ort-wasm-simd-threaded.jsep.wasm",
+    "source": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0-dev.20260416-b7804b056c/dist/ort-wasm-simd-threaded.jsep.wasm",
+    "bytes": 26101073,
+    "sha256": "ae61141f8fbf0a4e43fd7b4f4d40a1a115627f6facc4f33ddf84074a655e33ea"
+  },
+  {
+    "file": "transformers.min.js",
+    "source": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js",
+    "bytes": 558373,
+    "sha256": "e74bd32ed4453369ebb0edcaa27f6bc6204004a949a0233cdb87b62dda8d6978",
+    "delivery": "imported directly from this CDN URL; not vendored"
+  },
+  {
+    "file": "ort-wasm-simd-threaded.asyncify.mjs",
+    "source": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0-dev.20260416-b7804b056c/dist/ort-wasm-simd-threaded.asyncify.mjs",
+    "bytes": 47389,
+    "sha256": "5959c6733039619c9af710d8e1bae8d6e84402787990637be987c2b1bd6c5fa9"
+  },
+  {
+    "file": "ort-wasm-simd-threaded.asyncify.wasm",
+    "source": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0-dev.20260416-b7804b056c/dist/ort-wasm-simd-threaded.asyncify.wasm",
+    "bytes": 23567050,
+    "sha256": "e0c0c6d3e73d43b8a249972f8358f845b08cc16fec3c80efafdf8bed40366786"
+  }
+]

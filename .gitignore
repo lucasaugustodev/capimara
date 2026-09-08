@@ -1,0 +1,6 @@
+.env
+.env.*
+.local/
+tests/results/
+__pycache__/
+*.dpapi
