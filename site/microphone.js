@@ -1,9 +1,11 @@
 const ASSETS=new URL('../assets/vendor/vad/',import.meta.url).href;
 let libraries;
+let assetsPrepared;
 function script(src){return new Promise((resolve,reject)=>{const tag=document.createElement('script');tag.src=src;tag.onload=resolve;tag.onerror=()=>{tag.remove();reject(Error('Não consegui preparar o microfone. Recarregue a página.'));};document.head.append(tag);});}
 export function prepareMicrophone(){
  if(!libraries)libraries=(async()=>{if(!window.ort)await script(ASSETS+'ort.wasm.min.js');if(!window.vad)await script(ASSETS+'bundle.min.js');})().catch(error=>{libraries=null;throw error;});
- return libraries;
+ if(!assetsPrepared)assetsPrepared=Promise.all(['silero_vad_v5.onnx','ort-wasm-simd-threaded.wasm','ort-wasm-simd-threaded.mjs'].map(async name=>{const response=await fetch(ASSETS+name,{cache:'force-cache'});if(!response.ok)throw Error('Não consegui preparar a escuta. Tente novamente.');await response.arrayBuffer();})).catch(error=>{assetsPrepared=null;throw error;});
+ return Promise.all([libraries,assetsPrepared]);
 }
 function wavFile(samples){
  const data=new ArrayBuffer(44+samples.length*2),v=new DataView(data);

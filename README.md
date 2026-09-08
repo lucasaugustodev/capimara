@@ -2,6 +2,8 @@
 
 Página estática da Capimara 3D, preparada para GitHub Pages, com conversa por
 microfone, respostas automáticas, movimento da boca, piscadas e aceno.
+A tela fica focada na personagem e nos controles de voz, sem chat escrito
+nem transcrições visíveis. O histórico em memória mantém o contexto da conversa.
 
 A interface usa caminhos relativos para funcionar em um site de projeto,
 como `https://usuario.github.io/capimara/`. O áudio é reproduzido inteiro
@@ -18,10 +20,12 @@ servidos junto da página. Licenças e origens das dependências ficam em
 
 O reconhecimento usa Whisper Base quantizado no navegador, em um Web Worker,
 com aceleração WebGPU quando disponível. A alternativa WebAssembly usa o
-Whisper Tiny para reduzir a espera em aparelhos sem essa aceleração. Na primeira
-conversa, os pesos são baixados do Hugging Face e armazenados no cache do
+Whisper Tiny para reduzir a espera em aparelhos sem essa aceleração. Ao abrir
+a página, os pesos são baixados do Hugging Face e armazenados no cache do
 navegador. Transformers.js 4.2.0 é importado de sua distribuição oficial no
-jsDelivr. O modelo é preparado antes de abrir a escuta. Áudio do microfone
+jsDelivr. O reconhecimento é aquecido e os arquivos de detecção de fala são
+pré-carregados em segundo plano, com um indicador de preparação. O microfone
+só é solicitado após tocar em Conversar por voz. Áudio do microfone
 fica no aparelho; somente o texto reconhecido segue para o servidor.
 
 O serviço de APIs é `https://augustolucasg-capimara-api.hf.space`.

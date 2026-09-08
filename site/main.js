@@ -1,31 +1,26 @@
 import {mount} from '../assets/viewer.js?v=3';
-import {ConversationMicrophone,prepareMicrophone} from './microphone.js?v=5';
+import {ConversationMicrophone,prepareMicrophone} from './microphone.js?v=7';
 import {apiFetch} from './api.js?v=6';
 import {BrowserTranscriber} from './transcriber.js?v=5';
 
-const $=s=>document.querySelector(s),messages=$('#messages'),input=$('#message');
+const $=s=>document.querySelector(s);
 let view,history=[],job=null,turn=0,busy=false,voiceMode=false,microphone=null,listenTimer=null;
-const welcome=$('#welcome').outerHTML;
-const state={ready:false,voiceMode:false,events:[],lastReply:null};
-const transcriber=new BrowserTranscriber(progress=>{if(voiceMode&&!state.recognitionReady)activity(`Preparando a escuta no seu aparelho… ${progress}%`);});
+const state={ready:false,voiceMode:false,events:[],lastReply:null,recognitionReady:false,recognitionLoading:false};
+let audioPreparation=null;
+const transcriber=new BrowserTranscriber(progress=>{
+ if(!state.recognitionReady){$('#preparation-progress').value=Math.max($('#preparation-progress').value,progress);$('#preparation-label').textContent=progress<99?'Preparando nossa conversa…':'Quase pronto para conversar…';}
+});
 window.capimaraApp={state,get viewer(){return view;},get history(){return history;},
  inspect:()=>({busy,voiceMode,microphoneActive:microphone?.stream?.active,recording:microphone?.listening?'recording':'inactive',micReady:microphone?.ready,micFrames:microphone?.frames,micRms:microphone?.rms,speechProbability:microphone?.probability,audioPaused:view?.audio.paused,audioTime:view?.audio.currentTime,audioState:view?.audio.state})};
 
 function activity(text=''){$('#activity').hidden=!text;$('#activity-text').textContent=text;}
 function error(message=''){$('#error').hidden=!message;$('#error').textContent=message;}
-function scroll(){messages.scrollTop=messages.scrollHeight;}
-function addMessage(role,text){
- $('#welcome')?.remove();const row=document.createElement('div');row.className='bubble-row '+role;
- const label=document.createElement('span');label.className='bubble-label';label.textContent=role==='user'?'VOCÊ':'CAPIMARA';
- const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=text;
- row.append(label,bubble);messages.append(row);scroll();return bubble;
-}
 function controls(){
- $('#send').disabled=!state.ready||busy;$('#voice-mode').disabled=!state.ready;
+ $('#voice-mode').disabled=!state.ready;
  $('#stop').hidden=!(busy||view&&!view.audio.paused);
  $('#voice-mode').setAttribute('aria-pressed',String(voiceMode));
  $('#voice-label').textContent=voiceMode?'Encerrar conversa por voz':'Conversar por voz';
- $('#voice-hint').textContent=voiceMode?'Não precisa apertar nada. Faça uma pausa para eu responder.':'Ative uma vez, permita o microfone e fale comigo.';
+ $('#voice-hint').textContent=voiceMode?(state.recognitionReady?'Faça uma pausa para eu responder. Depois continuo ouvindo.':'Estou preparando tudo. Já vamos conversar.'):(state.recognitionReady?'Tudo pronto. Ative o microfone e fale comigo.':'Já estou preparando tudo para você.');
  $('#mic-settings').hidden=!voiceMode;
  state.voiceMode=voiceMode;
 }
@@ -54,8 +49,7 @@ async function converse(message,audioFile=null){
  if(!state.ready||(!audioFile&&!message.trim()))return;
  // Called synchronously from the first gesture, before the API round trip.
  const unlocked=view.unlock();cancelRecording();cancelTurn();error();busy=true;controls();
- const current=turn;let replyBubble=null,gotAudio=false,textOnly=false,noSpeech=false;
- if(!audioFile)addMessage('user',message);
+ const current=turn;let replyText='',gotAudio=false,textOnly=false,noSpeech=false;
  activity(audioFile?'Entendendo o que você disse…':'Estou pensando…');
  view.update({phase:audioFile?'transcribing':'thinking'});
  try{
@@ -64,7 +58,7 @@ async function converse(message,audioFile=null){
    const result=await transcriber.transcribe(audioFile);if(current!==turn)return;
    message=result.text;state.lastTranscriptionSeconds=result.seconds;
    if(!message){noSpeech=true;activity('Pode repetir, continuo ouvindo.');view.stop();return;}
-   addMessage('user',message);activity('Estou pensando…');view.update({phase:'thinking'});
+   activity('Estou pensando…');view.update({phase:'thinking'});
   }
   job=new AbortController();const body=JSON.stringify({message,history}),headers={'Content-Type':'application/json'};
   const response=await apiFetch('/api/talk',{method:'POST',body,headers,signal:job.signal});
@@ -74,18 +68,16 @@ async function converse(message,audioFile=null){
    if(state.events.length>120)state.events.shift();
    if(payload.phase==='error')throw Error(payload.message||'Não consegui responder agora. Tente de novo.');
    if(payload.phase==='no_speech'){noSpeech=true;activity(payload.message);view.stop();}
-   if(payload.phase==='transcribed')addMessage('user',payload.message);
    if(payload.phase==='preparing'){
-    replyBubble=replyBubble||addMessage('assistant',payload.reply);
-    replyBubble.textContent=payload.reply;history=payload.history;activity('Já vou falar com você…');
+    replyText=payload.reply;history=payload.history;activity('Já vou falar com você…');
     view.update({phase:'preparing'});
    }
    if(payload.phase==='audio_chunk'){
-    if(!replyBubble)replyBubble=addMessage('assistant',payload.reply);
+    if(!replyText)replyText=payload.reply;
     if(!gotAudio){view.beginSpeech();gotAudio=true;}
     view.appendSpeech(payload);controls();
    }
-   if(payload.phase==='audio_done'){await view.endSpeech();if(current!==turn)return;activity();state.lastReply={reply:replyBubble?.textContent,duration:payload.duration,chunks:payload.chunks,tts_seconds:payload.tts_total_seconds};controls();}
+   if(payload.phase==='audio_done'){await view.endSpeech();if(current!==turn)return;activity();state.lastReply={reply:replyText,duration:payload.duration,chunks:payload.chunks,tts_seconds:payload.tts_total_seconds};controls();}
    if(payload.phase==='audio_unavailable'){textOnly=true;error(payload.message);activity();view.stop();if(voiceMode)stopVoiceMode();}
    if(payload.phase==='done'){history=payload.history;state.totalSeconds=payload.total_seconds;}
   }
@@ -99,17 +91,23 @@ async function converse(message,audioFile=null){
  }
 }
 
-$('#message-form').addEventListener('submit',event=>{
- event.preventDefault();const text=input.value.trim();if(!text||busy)return;
- input.value='';input.style.height='auto';converse(text);
-});
-input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(130,input.scrollHeight)+'px';});
-input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$('#message-form').requestSubmit();}});
-messages.addEventListener('click',event=>{const suggestion=event.target.closest('[data-message]');if(suggestion&&!busy)converse(suggestion.dataset.message);});
 $('#stop').addEventListener('click',()=>{cancelTurn();if(voiceMode)scheduleListening();});
-$('#new-chat').addEventListener('click',()=>{stopVoiceMode();cancelTurn();history=[];state.lastReply=null;messages.innerHTML=welcome;error();input.value='';});
+$('#new-chat').addEventListener('click',()=>{const resume=voiceMode;cancelRecording();cancelTurn();history=[];state.lastReply=null;error();if(resume)scheduleListening();});
 $('#home-camera').addEventListener('click',()=>view?.home());
-$('#toggle-text').addEventListener('click',()=>{const form=$('#message-form');form.hidden=!form.hidden;$('#toggle-text').setAttribute('aria-expanded',String(!form.hidden));$('#toggle-text').textContent=form.hidden?'Prefiro digitar':'Ocultar teclado';if(!form.hidden)input.focus();});
+
+function prepareAudio(){
+ if(audioPreparation)return audioPreparation;
+ state.recognitionLoading=true;state.recognitionError=false;$('#preparation').hidden=false;
+ $('#preparation-label').textContent='Preparando nossa conversa…';$('#preparation-progress').value=0;
+ audioPreparation=Promise.all([transcriber.prepare(),prepareMicrophone()]).then(([recognition])=>{
+  state.recognitionReady=true;state.recognitionLoading=false;state.recognitionDevice=recognition.device;
+  $('#preparation').hidden=true;controls();return recognition;
+ }).catch(exc=>{
+  audioPreparation=null;state.recognitionLoading=false;state.recognitionError=true;
+  $('#preparation-label').textContent='Toque em conversar para tentar preparar novamente.';throw exc;
+ });
+ return audioPreparation;
+}
 
 function scheduleListening(){
  clearTimeout(listenTimer);
@@ -154,10 +152,8 @@ async function connectMicrophone(deviceId){
  microphone=current;
  try{
   await unlocked;if(microphone!==current||!voiceMode)return;
-  activity('Preparando a escuta no seu aparelho…');
-  const recognition=await transcriber.prepare();state.recognitionReady=true;state.recognitionDevice=recognition.device;
-  if(microphone!==current||!voiceMode)return;
-  await current.open(view.audio.context,deviceId);
+  // Permission and capture setup can run while the page's existing warmup finishes.
+  await Promise.all([prepareAudio(),current.open(view.audio.context,deviceId)]);
   if(microphone!==current||!voiceMode)return;
   await microphoneList();if(!busy&&view.audio.paused)startListening();
  }catch(exc){if(microphone===current)microphoneError(exc);}
@@ -177,13 +173,15 @@ async function connectService(){
   const status=await response.json();state.voiceReady=status.voice_ready;
   state.ready=status.ready;controls();activity();
   if(!status.ready)throw Error('A conversa está se preparando. Tente conectar novamente em instantes.');
-  $('#reconnect').hidden=true;error();
+  $('#reconnect').hidden=true;
+  if(!state.recognitionError)error();
  }catch(exc){activity();error(exc.message);$('#reconnect').hidden=false;}
 }
-$('#reconnect').addEventListener('click',connectService);
+$('#reconnect').addEventListener('click',()=>{connectService();prepareAudio().catch(exc=>error(exc.message));});
+// Download and warm recognition immediately, before any microphone gesture.
+prepareAudio().catch(()=>{});
 try{
  view=await mount($('#avatar'),new URL('../assets',import.meta.url).href);$('#loading').hidden=true;controls();
- prepareMicrophone().catch(()=>{});
  view.audio.addEventListener('ended',()=>{controls();scheduleListening();});view.audio.addEventListener('playing',controls);
  connectService();
 }catch(exc){$('#loading').textContent='Não consegui abrir agora. Recarregue a página.';error(exc.message);}

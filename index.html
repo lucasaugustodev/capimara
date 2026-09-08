@@ -6,40 +6,33 @@
  <meta name="referrer" content="no-referrer">
  <title>Capimara — vamos conversar?</title>
  <link rel="icon" href="./site/favicon.svg" type="image/svg+xml">
- <link rel="stylesheet" href="./site/style.css?v=5">
+ <link rel="stylesheet" href="./site/style.css?v=7">
 </head>
 <body>
  <header class="topbar">
   <a class="brand" href="./" aria-label="Capimara, início"><img src="./site/favicon.svg" width="38" height="38" alt=""><span>capimara<span class="brand-dot">.</span></span></a>
-  <span class="top-note">Um pouquinho de curiosidade faz bem.</span>
+  <span class="top-note">Uma boa conversa começa com um oi.</span>
   <button id="new-chat" class="quiet-button">Nova conversa <span aria-hidden="true">↗</span></button>
  </header>
  <main class="layout">
   <section id="avatar" class="avatar-panel" aria-label="Capimara em 3D">
-   <div class="avatar-heading"><span class="eyebrow">QUE BOM QUE VOCÊ CHEGOU</span><h1>Vamos conversar?</h1></div>
+   <div class="avatar-heading"><span class="eyebrow">QUE BOM QUE VOCÊ CHEGOU</span><h1>É só falar comigo.</h1></div>
    <div class="capi-stage" aria-label="Arraste para girar a Capimara"></div>
    <div id="loading" class="loading"><span class="loader"></span>Estou chegando…</div>
-   <div class="scene-tools"><button class="capi-wave pill" title="Pedir um aceno"><span aria-hidden="true">✋</span> Um oi</button><button id="home-camera" class="pill" title="Voltar para o ângulo inicial">↺ <span>Frente</span></button></div>
-   <div class="avatar-bottom"><span class="presence"><i></i><span class="capi-status" role="status">Preparando a Capimara…</span></span><span class="orbit-hint">Arraste para me ver de pertinho <span aria-hidden="true">↔</span></span></div>
-  </section>
-  <section class="conversation" aria-label="Nossa conversa">
-   <div class="chat-heading"><div><span class="eyebrow">NOSSA CONVERSA</span><h2>É só falar comigo.</h2></div><button id="stop" class="quiet-button" hidden>Interromper</button></div>
-   <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions">
-    <div id="welcome" class="welcome"><span class="welcome-flower" aria-hidden="true">✿</span><h3>Oi, eu sou a Capimara!</h3><p>Me conte uma novidade, faça uma pergunta ou venha brincar comigo.</p><div class="suggestions"><button data-message="Oi, Capimara! Vamos brincar de adivinhação?">Vamos brincar?</button><button data-message="Capimara, me conte uma curiosidade sobre as capivaras.">Me conta uma curiosidade</button></div></div>
-   </div>
-   <div class="composer-area">
+   <div class="avatar-bottom"><span class="presence"><i></i><span class="capi-status">Preparando a Capimara…</span></span></div>
+   <div class="voice-controls" role="region" aria-label="Conversa por voz">
+    <div class="scene-tools"><button class="capi-wave pill" title="Pedir um aceno"><span aria-hidden="true">✋</span> Um oi</button><button id="home-camera" class="pill" title="Voltar para o ângulo inicial">↺ <span>Frente</span></button></div>
+    <div id="preparation" class="preparation" role="status"><span id="preparation-label">Preparando nossa conversa…</span><progress id="preparation-progress" max="100" value="0" aria-label="Preparação da conversa"></progress></div>
     <div id="activity" class="activity" role="status" hidden><span class="activity-dot"></span><span id="activity-text"></span></div>
     <p id="error" class="error" role="alert" hidden></p>
     <button id="reconnect" class="quiet-button" hidden>Conectar novamente</button>
     <button id="voice-mode" class="voice-button" disabled aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3m-3 0h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span id="voice-label">Conversar por voz</span><span id="mic-meter" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
     <p id="voice-hint" class="composer-hint">Ative uma vez, permita o microfone e fale comigo.</p>
-    <div id="mic-settings" class="mic-settings" hidden><label for="microphone-device">Microfone</label><select id="microphone-device" aria-label="Microfone"><option value="">Padrão do computador</option></select></div>
-    <button id="toggle-text" class="text-toggle quiet-button" aria-expanded="false" aria-controls="message-form">Prefiro digitar</button>
-    <form id="message-form" class="composer" hidden><label for="message" class="sr-only">Sua mensagem</label><textarea id="message" name="message" rows="1" maxlength="1500" placeholder="Escreva o que está pensando…"></textarea><button id="send" type="submit" aria-label="Enviar mensagem" title="Enviar mensagem" disabled><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>
+    <div class="voice-options"><button id="stop" class="quiet-button" hidden>Interromper</button><details id="mic-settings" hidden><summary>Microfone</summary><select id="microphone-device" aria-label="Microfone"><option value="">Padrão do computador</option></select></details></div>
    </div>
   </section>
  </main>
  <footer class="page-footer"><span>Feito para boas conversas.</span><span>Personagem virtual · voz e respostas geradas por IA</span></footer>
- <script type="module" src="./site/main.js?v=6"></script>
+ <script type="module" src="./site/main.js?v=7"></script>
 </body>
 </html>
