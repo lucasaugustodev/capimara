@@ -1,15 +1,13 @@
 import {mount} from '../assets/viewer.js?v=3';
 import {ConversationMicrophone,prepareMicrophone} from './microphone.js?v=7';
 import {apiFetch} from './api.js?v=6';
-import {BrowserTranscriber} from './transcriber.js?v=5';
+import {ElevenTranscriber} from './transcriber.js?v=8';
 
 const $=s=>document.querySelector(s);
 let view,history=[],job=null,turn=0,busy=false,voiceMode=false,microphone=null,listenTimer=null;
 const state={ready:false,voiceMode:false,events:[],lastReply:null,recognitionReady:false,recognitionLoading:false};
 let audioPreparation=null;
-const transcriber=new BrowserTranscriber(progress=>{
- if(!state.recognitionReady){$('#preparation-progress').value=Math.max($('#preparation-progress').value,progress);$('#preparation-label').textContent=progress<99?'Preparando nossa conversa…':'Quase pronto para conversar…';}
-});
+const transcriber=new ElevenTranscriber();
 window.capimaraApp={state,get viewer(){return view;},get history(){return history;},
  inspect:()=>({busy,voiceMode,microphoneActive:microphone?.stream?.active,recording:microphone?.listening?'recording':'inactive',micReady:microphone?.ready,micFrames:microphone?.frames,micRms:microphone?.rms,speechProbability:microphone?.probability,audioPaused:view?.audio.paused,audioTime:view?.audio.currentTime,audioState:view?.audio.state})};
 
@@ -54,13 +52,14 @@ async function converse(message,audioFile=null){
  view.update({phase:audioFile?'transcribing':'thinking'});
  try{
   await unlocked;if(current!==turn)return;
+  job=new AbortController();
   if(audioFile){
-   const result=await transcriber.transcribe(audioFile);if(current!==turn)return;
+   const result=await transcriber.transcribe(audioFile,job.signal);if(current!==turn)return;
    message=result.text;state.lastTranscriptionSeconds=result.seconds;
    if(!message){noSpeech=true;activity('Pode repetir, continuo ouvindo.');view.stop();return;}
    activity('Estou pensando…');view.update({phase:'thinking'});
   }
-  job=new AbortController();const body=JSON.stringify({message,history}),headers={'Content-Type':'application/json'};
+  const body=JSON.stringify({message,history}),headers={'Content-Type':'application/json'};
   const response=await apiFetch('/api/talk',{method:'POST',body,headers,signal:job.signal});
   for await(const payload of readEvents(response)){
    if(current!==turn)return;
@@ -98,7 +97,7 @@ $('#home-camera').addEventListener('click',()=>view?.home());
 function prepareAudio(){
  if(audioPreparation)return audioPreparation;
  state.recognitionLoading=true;state.recognitionError=false;$('#preparation').hidden=false;
- $('#preparation-label').textContent='Preparando nossa conversa…';$('#preparation-progress').value=0;
+ $('#preparation-label').textContent='Preparando nossa conversa…';$('#preparation-progress').removeAttribute('value');
  audioPreparation=Promise.all([transcriber.prepare(),prepareMicrophone()]).then(([recognition])=>{
   state.recognitionReady=true;state.recognitionLoading=false;state.recognitionDevice=recognition.device;
   $('#preparation').hidden=true;controls();return recognition;
@@ -178,7 +177,7 @@ async function connectService(){
  }catch(exc){activity();error(exc.message);$('#reconnect').hidden=false;}
 }
 $('#reconnect').addEventListener('click',()=>{connectService();prepareAudio().catch(exc=>error(exc.message));});
-// Download and warm recognition immediately, before any microphone gesture.
+// Prepare microphone assets on arrival. Recognition runs through ElevenLabs.
 prepareAudio().catch(()=>{});
 try{
  view=await mount($('#avatar'),new URL('../assets',import.meta.url).href);$('#loading').hidden=true;controls();
